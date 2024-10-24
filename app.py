@@ -13,7 +13,11 @@ GEOIP_API_URL = "https://ipapi.co/{}/json/"
 
 # Function to test a single proxy with enhanced capabilities
 def test_proxy(proxy_type, proxy_address, target_url, packet_count, ignore_response):
-    proxy_url = f'socks{proxy_type}://{proxy_address}'
+    if proxy_type == 'http':
+        proxy_url = f'http://{proxy_address}'
+    else:
+        proxy_url = f'socks{proxy_type}://{proxy_address}'
+    
     proxies = {
         'http': proxy_url,
         'https': proxy_url
@@ -36,7 +40,11 @@ def test_proxy(proxy_type, proxy_address, target_url, packet_count, ignore_respo
 # Function to check proxy anonymity (Anonymity Check)
 def check_proxy_anonymity(proxy_type, proxy_address):
     test_url = "http://httpbin.org/ip"  # URL that returns your IP
-    proxy_url = f'socks{proxy_type}://{proxy_address}'
+    if proxy_type == 'http':
+        proxy_url = f'http://{proxy_address}'
+    else:
+        proxy_url = f'socks{proxy_type}://{proxy_address}'
+    
     proxies = {
         'http': proxy_url,
         'https': proxy_url
@@ -72,7 +80,11 @@ def geoip_lookup(ip):
 
 # Function to send multiple packets (Load Test)
 def load_test(proxy_type, proxy_address, target_url, packet_count):
-    proxy_url = f'socks{proxy_type}://{proxy_address}'
+    if proxy_type == 'http':
+        proxy_url = f'http://{proxy_address}'
+    else:
+        proxy_url = f'socks{proxy_type}://{proxy_address}'
+
     proxies = {
         'http': proxy_url,
         'https': proxy_url
@@ -148,7 +160,7 @@ def display_proxies(proxies, proxy_type):
 # Main function for CLI
 def main():
     # Parse command-line arguments
-    parser = argparse.ArgumentParser(description='Enhanced SOCKS4 & SOCKS5 Proxy Tester')
+    parser = argparse.ArgumentParser(description='Enhanced Proxy Tester (SOCKS4, SOCKS5, HTTP)')
     parser.add_argument('--url', type=str, help='Minecraft server URL to test (e.g., http://example.com)', required=True)
     parser.add_argument('--show-proxies', action='store_true', help='Display the list of proxies')
     parser.add_argument('--output', type=str, help='Output file for test results', default='proxy_test_results.txt')
@@ -166,15 +178,19 @@ def main():
     # Load proxies from files
     socks4_proxies = read_proxies('socks4.txt')
     socks5_proxies = read_proxies('socks5.txt')
+    http_proxies = read_proxies('http.txt')
 
     # Display proxies if requested
     if args.show_proxies:
         display_proxies(socks4_proxies, 'SOCKS4')
         display_proxies(socks5_proxies, 'SOCKS5')
+        display_proxies(http_proxies, 'HTTP')
         return
 
     # Aggregate proxies for testing
-    all_proxies = [(proxy, '4') for proxy in socks4_proxies] + [(proxy, '5') for proxy in socks5_proxies]
+    all_proxies = [(proxy, '4') for proxy in socks4_proxies] + \
+                  [(proxy, '5') for proxy in socks5_proxies] + \
+                  [(proxy, 'http') for proxy in http_proxies]
     
     # Prepare to store results
     results = []
@@ -195,7 +211,7 @@ def main():
             geo_info = geoip_lookup(ip) if args.geoip else None
 
             result = {
-                "type": f"SOCKS{proxy_type}",
+                "type": f"{'HTTP' if proxy_type == 'http' else 'SOCKS' + proxy_type}",
                 "proxy": proxy,
                 "status": "Success",
                 "response": response,
@@ -205,7 +221,7 @@ def main():
             }
         else:
             result = {
-                "type": f"SOCKS{proxy_type}",
+                "type": f"{'HTTP' if proxy_type == 'http' else 'SOCKS' + proxy_type}",
                 "proxy": proxy,
                 "status": "Failed",
                 "error": response
