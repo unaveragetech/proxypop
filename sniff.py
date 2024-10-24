@@ -109,7 +109,7 @@ def create_instance(port):
         data = request.json
         target = data.get('target')
         rate = data.get('rate', 1)
-        amount = data.get('amount', 10)
+        amount = int(data.get('amount', 10))
         threading.Thread(target=send_packets, args=(target, rate, amount, port)).start()
         return jsonify({"message": "Packet sending started", "target": target, "rate": rate, "amount": amount})
 
@@ -124,9 +124,22 @@ def create_instance(port):
 
 # CLI function to manage instances
 def cli():
+    commands = [
+        "start_instance - Start a new instance",
+        "list_instances - List all running instances",
+        "ping - Ping a target URL",
+        "send_packet - Send packets to a target URL",
+        "start_sniffing - Start sniffing on a network interface",
+        "export_results - Export results to JSON file",
+        "exit - Exit the CLI"
+    ]
+    
     while True:
-        command = input("Enter command (start_instance, list_instances, ping, send_packet, start_sniffing, export_results, exit): ")
-        
+        print("\nAvailable commands:")
+        for command in commands:
+            print(command)
+        command = input("Enter command: ")
+
         if command == "start_instance":
             port = len(instances) + 5000  # Simple port allocation starting from 5000
             instance_thread = threading.Thread(target=create_instance, args=(port,))
